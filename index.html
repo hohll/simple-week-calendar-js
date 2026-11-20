@@ -3,10 +3,17 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Modern Week Calendar (Vanilla JS - Zero Dependencies)</title>
+  <title>Agendo (Vanilla JS - Zero Dependencies)</title>
+  <link rel="icon" type="image/svg+xml" href="assets/logo-mark.svg" />
   
-  <!-- Calendar Library Styles -->
-  <link rel="stylesheet" href="week-calendar.css" />
+  <!-- CSS framework picked in the Customize sidebar (set by demo.js; empty for the default theme) -->
+  <link id="framework-css" rel="stylesheet" crossorigin="anonymous" />
+
+  <!-- Calendar Library Styles + optional themes -->
+  <link rel="stylesheet" href="agendo.css" />
+  <link rel="stylesheet" href="themes/tabler.css" />
+  <link rel="stylesheet" href="themes/bootstrap.css" />
+  <link rel="stylesheet" href="themes/bulma.css" />
   
   <!-- Demo Application Styles -->
   <link rel="stylesheet" href="demo.css" />
@@ -15,21 +22,258 @@
 
   <header>
     <div>
-      <h1>Modern Week Calendar <span class="badge">Zero Dependencies</span></h1>
+      <h1><img src="assets/logo-mark.svg" alt="" width="32" height="32" /> Agendo <span class="badge">Zero Dependencies</span></h1>
     </div>
-    <div id="log-toast"></div>
+    <div class="header-tools">
+      <div id="log-toast"></div>
+      <button type="button" id="scheme-btn" class="demo-btn scheme-btn" aria-label="Switch to dark mode" title="Switch to dark mode">
+        <svg class="icon-moon" viewBox="0 0 24 24" width="18" height="18" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9z"/></svg>
+        <svg class="icon-sun" viewBox="0 0 24 24" width="18" height="18" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/></svg>
+      </button>
+      <button type="button" id="customize-btn" class="customize-btn" aria-controls="customize" aria-expanded="false">
+        <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 6h8M16 6h4M4 12h2M10 12h10M4 18h11M19 18h1"/><circle cx="14" cy="6" r="2"/><circle cx="8" cy="12" r="2"/><circle cx="17" cy="18" r="2"/></svg>
+        Customize
+      </button>
+    </div>
   </header>
 
   <div class="info-bar">
     <div>
-      💡 <strong>Try it:</strong> Click & drag on empty slots to create events &bull; Drag events to move &bull; Drag top/bottom edges to resize &bull; Click to edit.
+      💡 <strong>Try it:</strong> Click & drag on empty slots to create events &bull; Drag events to move &bull; Drag top/bottom edges to resize &bull; Click to edit &bull; In the resource views, drag sideways (timeline: up/down) to change desk.
     </div>
+    <div id="perf" class="perf" role="status" aria-live="polite" title="Time of the last render (view change, previous / next, today)"></div>
   </div>
 
-  <div id="calendar-container"></div>
+  <div class="demo-main">
+    <div id="calendar-container"></div>
+
+    <!-- Customize sidebar: every change rebuilds the calendar with the new options -->
+    <aside id="customize" class="customize" aria-labelledby="customize-title" inert>
+      <div class="customize-head">
+        <h2 id="customize-title">Customize</h2>
+        <button type="button" class="customize-close" data-close aria-label="Close">&times;</button>
+      </div>
+      <form id="customize-form" class="customize-body">
+        <fieldset>
+          <legend>Theme</legend>
+          <div class="chips">
+            <label><input type="radio" name="theme" value=""><span>Default</span></label>
+            <label><input type="radio" name="theme" value="tabler"><span>Tabler</span></label>
+            <label><input type="radio" name="theme" value="bootstrap"><span>Bootstrap</span></label>
+            <label><input type="radio" name="theme" value="bulma"><span>Bulma</span></label>
+          </div>
+          <span class="field-label">Color scheme</span>
+          <div class="chips">
+            <label><input type="radio" name="colorScheme" value="light"><span>Light</span></label>
+            <label><input type="radio" name="colorScheme" value="dark"><span>Dark</span></label>
+            <label><input type="radio" name="colorScheme" value="auto"><span>Auto (system)</span></label>
+          </div>
+        </fieldset>
+
+        <fieldset>
+          <legend>View buttons</legend>
+          <div class="chips">
+            <label><input type="checkbox" name="views" value="day"><span>Day</span></label>
+            <label><input type="checkbox" name="views" value="workweek"><span>Workweek</span></label>
+            <label><input type="checkbox" name="views" value="week"><span>Week</span></label>
+            <label><input type="checkbox" name="views" value="month"><span>Month</span></label>
+            <label><input type="checkbox" name="views" value="year"><span>Year</span></label>
+            <label><input type="checkbox" name="views" value="list"><span>List</span></label>
+            <label><input type="checkbox" name="views" value="resource"><span>Resources</span></label>
+            <label><input type="checkbox" name="views" value="timeline"><span>Timeline</span></label>
+          </div>
+        </fieldset>
+
+        <fieldset>
+          <legend>Locale &amp; time</legend>
+          <label class="field">Locale
+            <select name="locale">
+              <option value="">Browser default</option>
+              <option value="en-US">English (US)</option>
+              <option value="en-GB">English (UK)</option>
+              <option value="fr-FR">Français</option>
+              <option value="de-DE">Deutsch</option>
+              <option value="es-ES">Español</option>
+              <option value="it-IT">Italiano</option>
+              <option value="ja-JP">日本語</option>
+            </select>
+          </label>
+          <div class="chips">
+            <label><input type="radio" name="firstDayOfWeek" value="1"><span>Week starts Monday</span></label>
+            <label><input type="radio" name="firstDayOfWeek" value="0"><span>Sunday</span></label>
+          </div>
+          <label class="switch"><input type="checkbox" name="use24Hour"><span>24-hour clock</span></label>
+          <label class="switch"><input type="checkbox" name="weekNumbers"><span>Week numbers</span></label>
+        </fieldset>
+
+        <fieldset>
+          <legend>Time grid</legend>
+          <div class="field-row">
+            <label class="field">Start hour <input type="number" name="startHour" min="0" max="23"></label>
+            <label class="field">End hour <input type="number" name="endHour" min="1" max="24"></label>
+          </div>
+          <div class="field-row">
+            <label class="field">Business from <input type="number" name="businessStart" min="0" max="23"></label>
+            <label class="field">Business to <input type="number" name="businessEnd" min="1" max="24"></label>
+          </div>
+          <span class="field-label">Slot length</span>
+          <div class="chips">
+            <label><input type="radio" name="slotsPerHour" value="4"><span>15 min</span></label>
+            <label><input type="radio" name="slotsPerHour" value="2"><span>30 min</span></label>
+            <label><input type="radio" name="slotsPerHour" value="1"><span>60 min</span></label>
+          </div>
+          <label class="field">Slot height <output name="slotHeightOut"></output>
+            <input type="range" name="slotHeight" min="14" max="48" step="2">
+          </label>
+          <label class="switch"><input type="checkbox" name="showCurrentTime"><span>Current time line</span></label>
+          <label class="switch"><input type="checkbox" name="allDaySlot"><span>All-day row</span></label>
+        </fieldset>
+
+        <fieldset>
+          <legend>Month</legend>
+          <label class="field">Events per day before “+N more” <input type="number" name="monthMaxEvents" min="1" max="10"></label>
+        </fieldset>
+
+        <fieldset>
+          <legend>Data</legend>
+          <label class="switch"><input type="checkbox" name="resources"><span>Resources (Desk 1–3)</span></label>
+          <label class="switch"><input type="checkbox" name="timelineCustom"><span>Custom timeline (3 days)</span></label>
+          <label class="switch"><input type="checkbox" name="filters"><span>Calendars &amp; categories filter</span></label>
+        </fieldset>
+
+        <fieldset>
+          <legend>Plugins</legend>
+          <label class="field">Public holidays (holidays)
+            <select name="holidays">
+              <option value="">Off</option>
+              <option value="FR">France</option>
+              <option value="DE">Germany</option>
+              <option value="GB">United Kingdom</option>
+              <option value="US">United States</option>
+            </select>
+          </label>
+          <div class="chips plugin-sub" role="radiogroup" aria-label="Holidays shown as">
+            <label><input type="radio" name="holidaysDisplay" value="background"><span>Shaded days</span></label>
+            <label><input type="radio" name="holidaysDisplay" value="auto"><span>All-day events</span></label>
+          </div>
+          <label class="switch"><input type="checkbox" name="conflicts"><span>Conflict checker (conflicts)</span></label>
+          <label class="switch plugin-sub"><input type="checkbox" name="conflictsBlock"><span>Refuse double bookings of a desk</span></label>
+          <label class="switch"><input type="checkbox" name="ical"><span>iCalendar import / export (ical)</span></label>
+          <label class="switch"><input type="checkbox" name="timeProgress"><span>Past events faded, live progress (timeProgress)</span></label>
+          <label class="switch"><input type="checkbox" name="dataModel"><span>Custom fields (eventDataModel)</span></label>
+          <label class="switch"><input type="checkbox" name="storage"><span>Database storage (restStorage)</span></label>
+          <small class="plugin-sub storage-status" id="storage-status" aria-live="polite">Needs the Node.js server: <code>node server/server.js</code></small>
+        </fieldset>
+
+        <fieldset>
+          <legend>Background events</legend>
+          <ul class="bg-list" id="bg-list" aria-label="Background events"></ul>
+          <button type="button" class="demo-btn" id="bg-add">+ Add background event</button>
+        </fieldset>
+
+        <fieldset class="perf-test" id="perf-test">
+          <legend>Performance test</legend>
+          <div class="field-row">
+            <label class="field">Events
+              <select id="perf-count">
+                <option value="10">10</option><option value="100">100</option><option value="1000" selected>1,000</option>
+                <option value="10000">10,000</option><option value="100000">100,000</option><option value="1000000">1,000,000</option>
+              </select>
+            </label>
+            <label class="field">Spread over
+              <select id="perf-days">
+                <option value="30">1 month</option><option value="365" selected>1 year</option><option value="1825">5 years</option>
+              </select>
+            </label>
+          </div>
+          <div class="perf-actions">
+            <button type="button" class="demo-btn primary" id="perf-load">Load</button>
+            <button type="button" class="demo-btn" id="perf-bench">Benchmark all views</button>
+            <button type="button" class="demo-btn" id="perf-restore">Restore demo data</button>
+          </div>
+          <div id="perf-results" class="perf-results" aria-live="polite"></div>
+        </fieldset>
+
+        <fieldset>
+          <legend>Editing</legend>
+          <span class="field-label">Open an event on</span>
+          <div class="chips">
+            <label><input type="radio" name="openEventOn" value="click"><span>Click</span></label>
+            <label><input type="radio" name="openEventOn" value="dblclick"><span>Double-click</span></label>
+          </div>
+          <label class="switch"><input type="checkbox" name="readonly"><span>Read-only</span></label>
+          <label class="switch"><input type="checkbox" name="enableCreate"><span>Create by dragging</span></label>
+          <label class="switch"><input type="checkbox" name="enableMove"><span>Move events</span></label>
+          <label class="switch"><input type="checkbox" name="enableResize"><span>Resize events</span></label>
+          <label class="switch"><input type="checkbox" name="enableAllDay"><span>All-day events</span></label>
+          <label class="switch"><input type="checkbox" name="enableRecurring"><span>Recurring events</span></label>
+          <label class="switch"><input type="checkbox" name="eventPopover"><span>Hover popover</span></label>
+        </fieldset>
+
+        <details class="customize-code">
+          <summary>Options code</summary>
+          <pre><code id="customize-code"></code></pre>
+          <button type="button" class="demo-btn" data-copy>Copy</button>
+        </details>
+      </form>
+      <div class="customize-foot">
+        <button type="button" class="demo-btn" data-reset>Reset to defaults</button>
+      </div>
+    </aside>
+  </div>
+
+  <!-- Add / edit a background event (demo.js, through addEvent / updateEvent / deleteEvent) -->
+  <dialog id="bg-dialog" class="demo-dialog" aria-labelledby="bg-dialog-title">
+    <form method="dialog" id="bg-form">
+      <h2 id="bg-dialog-title">Background event</h2>
+      <label class="field">Title <input name="title" placeholder="e.g. Lunch break"></label>
+      <div class="chips" role="radiogroup" aria-label="Type">
+        <label><input type="radio" name="display" value="background" checked><span>Shade this time</span></label>
+        <label><input type="radio" name="display" value="inverse-background"><span>Shade everything else</span></label>
+      </div>
+      <label class="field">Colour <input type="color" name="color" value="#94a3b8"></label>
+      <label class="switch"><input type="checkbox" name="allDay"><span>All day</span></label>
+      <div class="field-row">
+        <label class="field">Start <input name="start" type="datetime-local" required></label>
+        <label class="field">End <input name="end" type="datetime-local" required></label>
+      </div>
+      <label class="field">Resource <select name="resourceId"></select></label>
+      <label class="field">Repeat
+        <select name="repeat">
+          <option value="none">Does not repeat</option>
+          <option value="daily">Every day</option>
+          <option value="weekdays">Every weekday (Monday to Friday)</option>
+          <option value="weekly">Every week on the same day</option>
+          <option value="keep">Keep its current rule</option>
+        </select>
+      </label>
+      <div class="demo-dialog-foot">
+        <button value="delete" class="demo-btn danger" formnovalidate>Delete</button>
+        <span></span>
+        <button value="cancel" class="demo-btn" formnovalidate>Cancel</button>
+        <button value="save" class="demo-btn primary">Save</button>
+      </div>
+    </form>
+  </dialog>
+
+  <footer class="demo-footer">
+    Based on <a href="https://github.com/markmclaren/simple-week-calendar-js">simple-week-calendar-js</a>
+    by <a href="https://github.com/markmclaren">Mark McLaren</a> &mdash; thank you!
+  </footer>
 
   <!-- Calendar Library Script -->
-  <script src="week-calendar.js"></script>
+  <script src="agendo.js"></script>
+
+  <!-- Plugins (Customize → Plugins) -->
+  <script src="plugins/event-data-model.js"></script>
+  <script src="plugins/holidays.js"></script>
+  <script src="plugins/conflicts.js"></script>
+  <script src="plugins/ical.js"></script>
+  <script src="plugins/time-progress.js"></script>
+  <script src="plugins/rest-storage.js"></script>
+
+  <!-- Test data generator (performance test) -->
+  <script src="data/generate-events.js"></script>
 
   <!-- Demo Application Script (fetches events.json) -->
   <script src="demo.js"></script>

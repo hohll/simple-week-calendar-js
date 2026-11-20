@@ -1,0 +1,4 @@
+# Demo server database (SQLite, its journal files, or the JSON fallback)
+server/*.db
+server/*.db-*
+server/agendo.json

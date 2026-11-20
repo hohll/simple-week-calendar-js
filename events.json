@@ -1,8 +1,14 @@
 [
-  { "id": "1", "title": "Team Standup", "start": "2026-11-09T09:00", "end": "2026-11-09T09:45", "color": "#3b82f6" },
-  { "id": "2", "title": "Lunch with Mike", "start": "2026-11-09T12:00", "end": "2026-11-09T13:15", "color": "#10b981" },
-  { "id": "3", "title": "Product Review (Overlapping)", "start": "2026-11-09T12:30", "end": "2026-11-09T14:00", "color": "#8b5cf6" },
-  { "id": "4", "title": "Dev Sync", "start": "2026-11-09T14:30", "end": "2026-11-09T15:30", "color": "#06b6d4" },
-  { "id": "5", "title": "Architecture Workshop", "start": "2026-11-10T10:00", "end": "2026-11-10T11:30", "color": "#f59e0b" },
-  { "id": "6", "title": "Gym & Cardio", "start": "2026-11-15T07:30", "end": "2026-11-15T08:30", "color": "#ec4899" }
+  { "id": "1", "calendarId": "work", "categoryId": "meeting", "resourceId": "desk-1", "title": "Team Standup", "start": "2026-11-09T09:00", "end": "2026-11-09T09:30", "recurrence": { "freq": "weekly", "byDay": ["MO", "TU", "WE", "TH", "FR"] } },
+  { "id": "2", "location": "Café de Flore", "priority": "low", "calendarId": "personal", "categoryId": "social", "resourceId": "desk-2", "title": "Lunch with Mike", "start": "2026-11-09T12:00", "end": "2026-11-09T13:15" },
+  { "id": "3", "location": "Room 4.12", "priority": "high", "attendees": 8, "calendarId": "work", "categoryId": "meeting", "resourceId": "desk-2", "title": "Product Review (Overlapping)", "start": "2026-11-09T12:30", "end": "2026-11-09T14:00" },
+  { "id": "4", "calendarId": "work", "categoryId": "meeting", "resourceId": "desk-1", "title": "Dev Sync", "start": "2026-11-09T14:30", "end": "2026-11-09T15:30" },
+  { "id": "5", "priority": "normal", "attendees": 25, "online": true, "description": "Target architecture for the booking service.\nBring the C4 diagrams.", "calendarId": "work", "categoryId": "workshop", "resourceId": "desk-2", "title": "Architecture Workshop", "start": "2026-11-10T10:00", "end": "2026-11-10T11:30" },
+  { "id": "6", "calendarId": "personal", "categoryId": "sport", "resourceId": "desk-3", "title": "Gym & Cardio", "start": "2026-11-15T07:30", "end": "2026-11-15T08:30", "recurrence": "FREQ=WEEKLY;BYDAY=WE,SU" },
+  { "id": "7", "calendarId": "work", "categoryId": "workshop", "resourceId": "desk-3", "title": "Product Conference", "allDay": true, "start": "2026-11-11", "end": "2026-11-13" },
+  { "id": "8", "calendarId": "personal", "categoryId": "social", "title": "Company Holiday", "allDay": true, "start": "2026-11-13" },
+  { "id": "9", "calendarId": "work", "categoryId": "meeting", "resourceId": "desk-2", "title": "Sprint Review", "start": "2026-10-30T15:00", "end": "2026-10-30T16:00", "recurrence": { "freq": "monthly", "byDay": ["-1FR"] } },
+  { "id": "10", "calendarId": "personal", "categoryId": "social", "title": "Team Birthday", "allDay": true, "start": "2026-11-12", "recurrence": { "freq": "yearly" } },
+  { "id": "11", "title": "Lunch break", "display": "background", "color": "#94a3b8", "start": "2026-11-09T12:00", "end": "2026-11-09T13:30", "recurrence": { "freq": "weekly", "byDay": ["MO", "TU", "WE", "TH", "FR"] } },
+  { "id": "12", "title": "Desk 2 maintenance", "display": "background", "resourceId": "desk-2", "color": "#ef4444", "start": "2026-11-11T14:00", "end": "2026-11-11T18:00" }
 ]
