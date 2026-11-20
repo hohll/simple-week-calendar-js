@@ -1,5 +1,5 @@
 /**
- * Modern Week Calendar — zero-dependency week/day view with drag to create, move and resize.
+ * Modern Week Calendar — zero-dependency day/week/month view with drag to create, move and resize.
  */
 
 const minutesOf = d => d.getHours() * 60 + d.getMinutes();
@@ -12,7 +12,7 @@ const div = (className, text = '') => Object.assign(document.createElement('div'
 class WeekCalendar {
   static defaults = {
     date: new Date(),
-    daysToShow: 7,          // 7 = week, 5 = workweek, 1 = day
+    daysToShow: 7,          // 7 = week, 5 = workweek, 1 = day, 'month' = month grid
     firstDayOfWeek: 1,      // 0 = Sunday, 1 = Monday
     startHour: 0,
     endHour: 24,
@@ -27,6 +27,7 @@ class WeekCalendar {
     enableMove: true,
     enableResize: true,
     showCurrentTime: true,
+    monthMaxEvents: 3,      // events listed per day cell in month view before "+N more"
     onEventClick: null,     // (event) => {}  — defaults to opening the edit dialog
     onEventChange: null,    // (event, 'move' | 'resize' | 'edit') => {}
     onEventCreate: null,    // (event) => {}
@@ -48,12 +49,13 @@ class WeekCalendar {
       weekday: new Intl.DateTimeFormat(o.locale, { weekday: 'short' }),
       hour: new Intl.DateTimeFormat(o.locale, { hour: 'numeric', hour12 }),
       time: new Intl.DateTimeFormat(o.locale, { hour: 'numeric', minute: '2-digit', hour12 }),
-      range: new Intl.DateTimeFormat(o.locale, { day: 'numeric', month: 'long', year: 'numeric' })
+      range: new Intl.DateTimeFormat(o.locale, { day: 'numeric', month: 'long', year: 'numeric' }),
+      month: new Intl.DateTimeFormat(o.locale, { month: 'long', year: 'numeric' })
     };
 
     this._build();
     this.setEvents(o.events);
-    this.scrollToHour(o.businessHours ? o.businessHours.start - 1 : 8);
+    this.scrollToHour(this._defaultHour());
     if (o.showCurrentTime) this.timer = setInterval(() => this._renderNow(), 60_000);
   }
 
@@ -82,6 +84,7 @@ class WeekCalendar {
           <button type="button" class="mwc-btn" data-days="1">Day</button>
           <button type="button" class="mwc-btn" data-days="5">Workweek</button>
           <button type="button" class="mwc-btn" data-days="7">Week</button>
+          <button type="button" class="mwc-btn" data-days="month">Month</button>
         </div>
       </div>
       <div class="mwc-grid"></div>
@@ -114,7 +117,7 @@ class WeekCalendar {
 
     $('.mwc-toolbar').addEventListener('click', e => {
       const btn = e.target.closest('button');
-      if (btn?.dataset.days) this.setView(+btn.dataset.days);
+      if (btn?.dataset.days) this.setView(btn.dataset.days === 'month' ? 'month' : +btn.dataset.days);
       else if (btn) this[btn.dataset.action]();
     });
 
@@ -122,6 +125,11 @@ class WeekCalendar {
     this.grid.addEventListener('pointermove', e => this._onMove(e));
     this.grid.addEventListener('pointerup', e => this._onUp(e));
     this.grid.addEventListener('pointercancel', e => this._onUp(e));
+    // Month view: a day number or "+N more" opens that day in day view.
+    this.grid.addEventListener('click', e => {
+      const goto = e.target.closest('[data-goto]');
+      if (goto) { this.o.daysToShow = 1; this.gotoDate(this.dates[+goto.dataset.goto]); }
+    });
 
     const { start, end } = this.form.elements;
     this._checkRange = () => end.setCustomValidity(
@@ -133,13 +141,25 @@ class WeekCalendar {
 
   // --- Rendering ---
 
+  get _isMonth() { return this.o.daysToShow === 'month'; }
+
   render() {
+    const month = this._isMonth, wasMonth = this.grid.classList.contains('mwc-month');
+    this.grid.classList.toggle('mwc-month', month);
+    this.el.querySelectorAll('[data-days]').forEach(b =>
+      b.classList.toggle('active', b.dataset.days === String(this.o.daysToShow)));
+
+    if (month) this._renderMonth(); else this._renderTimeline();
+    this._renderEvents();
+    this._renderNow();
+    if (wasMonth && !month) this.scrollToHour(this._defaultHour());
+  }
+
+  _renderTimeline() {
     const n = this.o.daysToShow;
     const first = n === 1 ? atMinutes(this.date, 0) : this._weekStart(this.date);
     this.dates = Array.from({ length: n }, (_, i) => addDays(first, i));
-
     this.titleEl.textContent = this.fmt.range.formatRange(this.dates[0], this.dates[n - 1]);
-    this.el.querySelectorAll('[data-days]').forEach(b => b.classList.toggle('active', +b.dataset.days === n));
 
     const now = new Date();
     this.grid.style.setProperty('--mwc-days', n);
@@ -154,11 +174,64 @@ class WeekCalendar {
       this.dates.map((_, i) => `<div class="mwc-col" data-day="${i}"><div class="mwc-layer"></div></div>`).join('');
 
     this.cols = [...this.grid.querySelectorAll('.mwc-col')];
-    this._renderEvents();
-    this._renderNow();
+  }
+
+  // Month grid: whole weeks covering the month of this.date (4 to 6 rows).
+  _renderMonth() {
+    const now = new Date();
+    const first = new Date(this.date.getFullYear(), this.date.getMonth(), 1);
+    const daysInMonth = new Date(first.getFullYear(), first.getMonth() + 1, 0).getDate();
+    const lead = (first.getDay() - this.o.firstDayOfWeek + 7) % 7;
+    const weeks = Math.ceil((lead + daysInMonth) / 7);
+    this.dates = Array.from({ length: weeks * 7 }, (_, i) => addDays(first, i - lead));
+    this.titleEl.textContent = this.fmt.month.format(first);
+
+    this.grid.style.setProperty('--mwc-weeks', weeks);
+    this.grid.innerHTML =
+      this.dates.slice(0, 7).map(d => `<div class="mwc-month-head">${this.fmt.weekday.format(d)}</div>`).join('') +
+      this.dates.map((d, i) => `
+        <div class="mwc-cell${d.getMonth() !== first.getMonth() ? ' mwc-other' : ''}${sameDay(d, now) ? ' mwc-today' : ''}" data-day="${i}">
+          <button type="button" class="mwc-cell-num" data-goto="${i}">${d.getDate()}</button>
+          <div class="mwc-cell-events"></div>
+        </div>`).join('');
+
+    this.cols = [];
+    this.cells = [...this.grid.querySelectorAll('.mwc-cell')];
+  }
+
+  _renderMonthEvents() {
+    const max = Math.max(1, this.o.monthMaxEvents);
+    this.cells.forEach((cell, i) => {
+      const day = this.dates[i], next = addDays(day, 1);
+      // An event shows on every day it overlaps (zero-length events on their start day).
+      const items = this.events
+        .filter(ev => ev.start < next && (ev.end > day || sameDay(ev.start, day)))
+        .sort((a, b) => a.start - b.start || b.end - a.end);
+      const shown = items.length > max ? items.slice(0, max - 1) : items;
+
+      const els = shown.map(ev => {
+        const el = div('mwc-mevent' + (this.drag?.event === ev ? ' is-dragging' : ''));
+        el.dataset.id = ev.id;
+        el.style.backgroundColor = ev.color ?? '';
+        const time = ev.start >= day ? this.fmt.time.format(ev.start) : '';
+        if (time) el.append(Object.assign(document.createElement('span'), { className: 'mwc-mevent-time', textContent: time }));
+        el.append(Object.assign(document.createElement('span'), { className: 'mwc-mevent-title', textContent: ev.title }));
+        el.title = `${time} ${ev.title}`.trim();
+        return el;
+      });
+      if (shown.length < items.length) {
+        els.push(Object.assign(document.createElement('button'), {
+          type: 'button', className: 'mwc-more', textContent: `+${items.length - shown.length} more`
+        }));
+        els.at(-1).dataset.goto = i;
+      }
+      cell.lastElementChild.replaceChildren(...els);
+      cell.classList.toggle('mwc-drop', this.drag?.moved === true && this.drag.target === i && this.drag.target !== this.drag.day);
+    });
   }
 
   _renderEvents() {
+    if (this._isMonth) return this._renderMonthEvents();
     const pct = min => ((clamp(min, this.startMin, this.endMin) - this.startMin) / (this.endMin - this.startMin)) * 100;
     const place = (el, s, e) => Object.assign(el.style, { top: `${pct(s)}%`, height: `${pct(e) - pct(s)}%` });
     const handles = !this.o.readonly && this.o.enableResize;
@@ -220,6 +293,7 @@ class WeekCalendar {
   }
 
   _renderNow() {
+    if (this._isMonth) return this.nowEl.remove();
     const now = new Date(), min = minutesOf(now);
     const i = this.dates.findIndex(d => sameDay(d, now));
     if (i < 0 || min < this.startMin || min > this.endMin) return this.nowEl.remove();
@@ -230,6 +304,7 @@ class WeekCalendar {
   // --- Pointer interaction (create / move / resize) ---
 
   _onDown(e) {
+    if (this._isMonth) return this._onMonthDown(e);
     const col = e.target.closest('.mwc-col');
     if (this.o.readonly || e.button !== 0 || !col) return;
 
@@ -253,6 +328,7 @@ class WeekCalendar {
   _onMove(e, force = false) {
     const d = this.drag;
     if (!d) return;
+    if (d.mode === 'month') return this._onMonthMove(e);
     const dx = e.clientX - d.x, dy = e.clientY - d.y;
     if (!d.moved && !force && Math.hypot(dx, dy) < 4) return;
     d.moved = !force || d.moved;
@@ -289,6 +365,7 @@ class WeekCalendar {
     const d = this.drag;
     if (!d) return;
     this.drag = null;
+    if (d.mode === 'month') return this._onMonthUp(e, d);
 
     if (e.type === 'pointercancel') {
       if (d.orig) Object.assign(d.event, d.orig);
@@ -300,6 +377,51 @@ class WeekCalendar {
       this.o.onEventChange?.(d.event, d.mode === 'move' ? 'move' : 'resize');
     }
     this._renderEvents();
+  }
+
+  // Month view: click an empty cell to create, click an event to edit, drag an event to another day.
+  _onMonthDown(e) {
+    const cell = e.target.closest('.mwc-cell');
+    if (this.o.readonly || e.button !== 0 || !cell || e.target.closest('[data-goto]')) return;
+    const evEl = e.target.closest('.mwc-mevent');
+    const event = evEl && this.events.find(x => x.id === evEl.dataset.id);
+    if (!event && !this.o.enableCreate) return;
+    const day = +cell.dataset.day;
+    this.drag = { mode: 'month', event, day, target: day, x: e.clientX, y: e.clientY, moved: false };
+    this.grid.setPointerCapture(e.pointerId);
+  }
+
+  _onMonthMove(e) {
+    const d = this.drag;
+    if (!d.event || !this.o.enableMove) return;
+    if (!d.moved && Math.hypot(e.clientX - d.x, e.clientY - d.y) < 4) return;
+    d.moved = true;
+    const cell = document.elementFromPoint(e.clientX, e.clientY)?.closest('.mwc-cell');
+    if (cell && this.grid.contains(cell)) d.target = +cell.dataset.day;
+    this._renderEvents();
+  }
+
+  _onMonthUp(e, d) {
+    const ev = d.event;
+    if (e.type === 'pointercancel') {
+      // nothing was changed yet
+    } else if (!ev) {
+      const min = (this.o.businessHours ? this.o.businessHours.start : this.o.startHour) * 60;
+      const day = this.dates[d.day];
+      this.openCreateModal(atMinutes(day, min), atMinutes(day, min + 60));
+    } else if (!d.moved) {
+      this.o.onEventClick ? this.o.onEventClick(ev) : this.openEditModal(ev);
+    } else if (d.target !== d.day) {
+      const shift = d.target - d.day;
+      ev.start = addDays(ev.start, shift);
+      ev.end = addDays(ev.end, shift);
+      this.o.onEventChange?.(ev, 'move');
+    }
+    this._renderEvents();
+  }
+
+  _defaultHour() {
+    return this.o.businessHours ? this.o.businessHours.start - 1 : 8;
   }
 
   _yToMin(y, rect) {
@@ -356,8 +478,14 @@ class WeekCalendar {
 
   // --- Public API ---
 
-  prev() { this.gotoDate(addDays(this.date, this.o.daysToShow === 1 ? -1 : -7)); }
-  next() { this.gotoDate(addDays(this.date, this.o.daysToShow === 1 ? 1 : 7)); }
+  prev() { this._step(-1); }
+  next() { this._step(1); }
+
+  _step(dir) {
+    if (this._isMonth) return this.gotoDate(new Date(this.date.getFullYear(), this.date.getMonth() + dir, 1));
+    this.gotoDate(addDays(this.date, dir * (this.o.daysToShow === 1 ? 1 : 7)));
+  }
+
   today() { this.gotoDate(new Date()); }
   gotoDate(date) { this.date = new Date(date); this.render(); }
   setView(daysToShow) { this.o.daysToShow = daysToShow; this.render(); }

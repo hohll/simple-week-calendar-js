@@ -1,6 +1,6 @@
 # Simple Week Calendar JS
 
-A modern, lightweight weekly calendar component built with **pure Vanilla JavaScript** and **zero dependencies**.
+A modern, lightweight day / week / month calendar component built with **pure Vanilla JavaScript** and **zero dependencies**.
 
 This project is inspired by and based on the classic [jquery-week-calendar](https://github.com/themouette/jquery-week-calendar) by [themouette](https://github.com/themouette). It has been completely rebuilt from the ground up for modern web development: no jQuery, no jQuery UI, no Moment.js, and no build tools required.
 
@@ -13,7 +13,8 @@ This project is inspired by and based on the classic [jquery-week-calendar](http
   - Click & drag on empty slots to create new events.
   - Drag events across days and time slots to move/reschedule.
   - Drag top/bottom resize handles to extend or shorten event duration.
-- **Multiple Views**: Seamlessly switch between Day (1-day), Workweek (5-day), and Week (7-day) views.
+- **Multiple Views**: Seamlessly switch between Day (1-day), Workweek (5-day), Week (7-day) and Month views.
+- **Month View**: Full month grid with click-to-create, click-to-edit, drag-to-reschedule across days, multi-day events shown on every day they cover, and a "+N more" link that opens the day view.
 - **Smart Overlap Handling**: Automatically detects overlapping event clusters and arranges them side-by-side cleanly.
 - **Current Time Indicator**: Live red indicator line showing the current day and time, updating automatically.
 - **Native Localization**: Built-in 12-hour or 24-hour display using the standard `Intl.DateTimeFormat` API and browser locales.
@@ -75,7 +76,7 @@ const calendar = new WeekCalendar('#calendar-container', {
 | Option | Type | Default | Description |
 | :--- | :--- | :--- | :--- |
 | `date` | `Date` | `new Date()` | Initial date displayed in the calendar. |
-| `daysToShow` | `number` | `7` | Number of days to display (`1` = day, `5` = workweek, `7` = full week). |
+| `daysToShow` | `number \| 'month'` | `7` | View to display (`1` = day, `5` = workweek, `7` = full week, `'month'` = month grid). |
 | `firstDayOfWeek` | `number` | `1` | First day of week (`0` = Sunday, `1` = Monday). |
 | `startHour` | `number` | `0` | Earliest hour visible in the daily timeline (0–23). |
 | `endHour` | `number` | `24` | Latest hour visible in the daily timeline (1–24). |
@@ -90,6 +91,7 @@ const calendar = new WeekCalendar('#calendar-container', {
 | `enableMove` | `boolean` | `true` | Allow dragging events to move them. |
 | `enableResize` | `boolean` | `true` | Allow dragging handles to resize events. |
 | `showCurrentTime` | `boolean` | `true` | Display the real-time indicator line. |
+| `monthMaxEvents` | `number` | `3` | Events listed per day in month view before collapsing the rest into "+N more". |
 | `onEventClick` | `Function \| null` | `null` | Called when an event is clicked. Defaults to opening edit dialog. |
 | `onEventChange` | `Function \| null` | `null` | Callback signature: `(event, 'move' | 'resize' | 'edit') => void`. |
 | `onEventCreate` | `Function \| null` | `null` | Callback signature: `(event) => void`. |
@@ -101,11 +103,11 @@ const calendar = new WeekCalendar('#calendar-container', {
 
 | Method | Parameters | Description |
 | :--- | :--- | :--- |
-| `prev()` | — | Navigate back by 1 day (in day view) or 1 week. |
-| `next()` | — | Navigate forward by 1 day (in day view) or 1 week. |
+| `prev()` | — | Navigate back by 1 day (day view), 1 week, or 1 month (month view). |
+| `next()` | — | Navigate forward by 1 day (day view), 1 week, or 1 month (month view). |
 | `today()` | — | Jump to the current date. |
 | `gotoDate(date)` | `Date \| string` | Navigate to a specific date. |
-| `setView(days)` | `1 \| 5 \| 7` | Switch view to 1, 5, or 7 days. |
+| `setView(view)` | `1 \| 5 \| 7 \| 'month'` | Switch to the day, workweek, week or month view. |
 | `scrollToHour(hour)` | `number` | Scroll the timeline to a specific hour. |
 | `getEvents()` | — | Returns a shallow copy of all current events. |
 | `setEvents(events)` | `Array` | Replace the current event list and re-render. |

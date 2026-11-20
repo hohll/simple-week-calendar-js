@@ -253,3 +253,100 @@
   border-color: var(--wc-primary);
   box-shadow: 0 0 0 3px rgb(59 130 246 / 0.15);
 }
+
+/* --- Month view --- */
+.mwc-grid.mwc-month {
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  grid-template-rows: auto repeat(var(--mwc-weeks), minmax(110px, 1fr));
+}
+
+.mwc-month-head {
+  position: sticky;
+  top: 0;
+  z-index: 30;
+  padding: 10px 4px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-align: center;
+  text-transform: uppercase;
+  color: var(--wc-text-muted);
+  background: var(--wc-surface);
+  border-bottom: 1px solid var(--wc-border);
+  border-left: 1px solid var(--wc-border);
+}
+
+.mwc-cell {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+  min-height: 0;
+  padding: 4px;
+  border-left: 1px solid var(--wc-border);
+  border-bottom: 1px solid var(--wc-border);
+}
+.mwc-month-head:first-child,
+.mwc-cell:nth-child(7n + 1) { border-left: 0; }
+.mwc-cell.mwc-other { background: var(--wc-surface); }
+.mwc-cell.mwc-drop {
+  background: var(--wc-primary-light);
+  outline: 2px dashed var(--wc-primary);
+  outline-offset: -2px;
+}
+
+.mwc-cell-num {
+  align-self: flex-start;
+  width: 26px;
+  height: 26px;
+  padding: 0;
+  font: inherit;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--wc-text);
+  background: none;
+  border: none;
+  border-radius: 50%;
+  cursor: pointer;
+}
+.mwc-cell-num:hover { background: var(--wc-border-subtle); }
+.mwc-other .mwc-cell-num { color: var(--wc-text-muted); }
+.mwc-cell.mwc-today .mwc-cell-num { background: var(--wc-primary); color: #fff; }
+
+.mwc-cell-events {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.mwc-mevent {
+  flex-shrink: 0;
+  padding: 2px 6px;
+  overflow: hidden;
+  font-size: 0.75rem;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  color: var(--wc-event-color);
+  background: var(--wc-event-bg);
+  border-radius: 4px;
+  cursor: pointer;
+  touch-action: none;
+}
+.mwc-mevent:hover { box-shadow: 0 2px 4px rgb(0 0 0 / 0.15); }
+.mwc-mevent.is-dragging { opacity: 0.5; cursor: grabbing; }
+.mwc-mevent-time { margin-right: 4px; font-size: 0.7rem; opacity: 0.9; }
+.mwc-mevent-title { font-weight: 600; }
+
+.mwc-more {
+  align-self: flex-start;
+  padding: 0 4px;
+  font: inherit;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--wc-text-muted);
+  background: none;
+  border: none;
+  cursor: pointer;
+}
+.mwc-more:hover { color: var(--wc-primary); }
